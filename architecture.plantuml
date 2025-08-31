@@ -1,0 +1,20 @@
+@startuml architecture
+actor User
+
+rectangle "Paath Guide App (Mobile)" {
+  User --> "🎙️ Mic Input"
+  "Mic Input" --> "Audio Preprocessor\n(Noise Reduction, VAD)"
+  "Audio Preprocessor" --> "Feature Extraction\n(Whisper / Wav2Vec2)"
+  "Feature Extraction" --> "API Call"
+}
+
+rectangle "Backend (FastAPI)" {
+  "API Call" --> "Vector DB (FAISS / Pinecone)"
+  "Vector DB (FAISS / Pinecone)" --> "Match Gurbani Line"
+  "Match Gurbani Line" --> "SGGS DB\n(Text + Translation)"
+  "SGGS DB\n(Text + Translation)" --> "API Response"
+}
+
+"API Response" --> "Paath Guide App (Mobile)"
+"Paath Guide App (Mobile)" --> User : "📖 Display Ang + Line\nwith Translation"
+@enduml
