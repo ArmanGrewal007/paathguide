@@ -1,0 +1,5 @@
+# PlantUML files
+*.plantuml linguist-language=PlantUML
+*.puml linguist-language=PlantUML
+*.pu linguist-language=PlantUML
+*.uml linguist-language=PlantUML
