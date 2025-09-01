@@ -1,2 +1,2 @@
 brew "portaudio"
-brew "llvm"
+brew "llvm@10"

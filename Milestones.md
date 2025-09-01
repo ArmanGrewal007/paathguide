@@ -9,7 +9,7 @@
 
 
 ## 1. Research & Setup  
-
+- ✅ **Audio to text transcriber** &rarr; openai-whisper turbo model does the work. Tried [Conformer-CTC-BPE-Large.nemo](https://github.com/Open-Speech-EkStep/vakyansh-models#:~:text=punjabi_large_ssl_500) as well but it didn't work as expected. Still, need to get the `wer`, for that I need SGGS local DB.
 
 ##  2. Prototype Matching Engine
 
