@@ -14,7 +14,7 @@ class SGGSDataLoader:
         self.db = db
         self.repo = VerseRepository(db)
 
-    def load_from_docx(self, file_path: str, skip_first: int = 2) -> int:
+    def load_from_docx_line_by_line(self, file_path: str, skip_first: int = 2) -> int:
         """
         Load SGGS data from DOCX file.
 
@@ -47,7 +47,6 @@ class SGGSDataLoader:
         for i, line in enumerate(lines):
             try:
                 parsed = models.parse_verse_line(line)
-
                 # Only add if we have valid data
                 if parsed["gurmukhi_text"]:
                     verse_data = schemas.VerseCreate(**parsed)
@@ -87,6 +86,61 @@ class SGGSDataLoader:
 
         return 0
 
+    def load_by_page(self, file_path: str, skip_first: int = 2) -> int:
+        """
+        Load SGGS data from DOCX file, grouping all gurmukhi_text by page_number.
+        Each row in the Verse table will represent one page, with all lines for that page concatenated.
+
+        Args:
+            file_path: Path to the DOCX file
+            skip_first: Number of initial lines to skip (default 2 for headers)
+
+        Returns:
+            Number of pages loaded
+        """
+        print(f"Loading SGGS data by page from {file_path}...")
+
+        doc = Document(file_path)
+        lines = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+        lines = lines[skip_first:]
+
+        # Group lines by page_number
+        pages = {}
+        for i, line in enumerate(lines):
+            try:
+                parsed = models.parse_verse_line(line)
+                page = parsed.get("page_number")
+                text = parsed.get("gurmukhi_text", "")
+                if page and text:
+                    if page not in pages:
+                        pages[page] = []
+                    pages[page].append(text)
+            except Exception as e:
+                print(f"Error parsing line {i}: {line[:50]}... - {e}")
+                continue
+
+        print(f"Found {len(pages)} pages to insert")
+
+        # Insert each page as a single Verse row with concatenated text and line_number=0
+        inserted = 0
+        for page, texts in pages.items():
+            full_text = " ".join(texts)  # space-separated
+            verse_data = schemas.VerseCreate(
+                gurmukhi_text=full_text,
+                page_number=page,
+                line_number=0,
+                translation=None,
+                transliteration=None,
+                raag=None,
+                author=None
+            )
+            self.repo.create_verse(verse_data)
+            inserted += 1
+
+        self.db.commit()
+        print(f"Inserted {inserted} pages into database (one row per page)")
+        return inserted
+
     def clear_database(self):
         """Clear all verses from the database."""
         self.db.query(models.Verse).delete()
@@ -96,7 +150,7 @@ class SGGSDataLoader:
     def reload_data(self, file_path: str, skip_first: int = 2) -> int:
         """Clear database and reload data."""
         self.clear_database()
-        return self.load_from_docx(file_path, skip_first)
+        return self.load_from_docx_line_by_line(file_path, skip_first)
 
 
 def load_sample_data(db: Session) -> None:

@@ -314,7 +314,7 @@ def load_data_from_docx(
         if clear_existing:
             loader.clear_database()
 
-        count = loader.load_from_docx(file_path, skip_first)
+        count = loader.load_from_docx_line_by_line(file_path, skip_first)
         return {"message": f"Successfully loaded {count} verses", "count": count}
 
     except Exception as e:

@@ -37,7 +37,13 @@ def parse_verse_line(line: str) -> dict:
         line: Raw line from the document
 
     Returns:
-        Dictionary with parsed components
+        ```python
+        {
+            "gurmukhi_text": "ਆਦਿ ਸਚੁ ਜੁਗਾਦਿ ਸਚੁ ॥",
+            "page_number": 1,
+            "line_number": 4
+        }
+        ```
     """
     # Pattern to match text followed by (page-line)
     pattern = r"^(.+?)\s*\((\d+)-(\d+)\)\s*$"

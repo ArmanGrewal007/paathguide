@@ -28,8 +28,8 @@ def load_data(file_path: str, skip_first: int, clear: bool):
             click.echo("Clearing existing data...")
             loader.clear_database()
 
-        click.echo(f"Loading data from {file_path}...")
-        count = loader.load_from_docx(file_path, skip_first)
+        # count = loader.load_from_docx_line_by_line(file_path, skip_first)
+        count = loader.load_by_page(file_path, skip_first)
         click.echo(f"✅ Successfully loaded {count} verses")
 
     except Exception as e:
