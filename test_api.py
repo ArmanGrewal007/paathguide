@@ -6,9 +6,9 @@ import sys
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from paathguide import schemas
 from paathguide.data_loader import load_sample_data
-from paathguide.models import SessionLocal, create_tables
+from paathguide.db_helper import schemas
+from paathguide.db_helper.models import SessionLocal, create_tables
 from paathguide.repository import VerseRepository
 
 

@@ -1,6 +1,7 @@
 """Pydantic schemas for API request/response models."""
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -95,7 +96,7 @@ class FuzzySearchResult(BaseModel):
     verse: Verse
     score: float = Field(..., description="Similarity score (0-100)")
     ratio_type: str = Field(..., description="Fuzzy matching algorithm used")
-    
+
     class Config:
         from_attributes = True
 

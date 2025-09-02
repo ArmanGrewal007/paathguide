@@ -1,6 +1,8 @@
-""" Quick code to check duplicate rows in gurmukhi_text column ... there are a lot"""
-from paathguide.models import SessionLocal
+"""Quick code to check duplicate rows in gurmukhi_text column ... there are a lot"""
+
 from sqlalchemy import text
+
+from paathguide.db_helper.models import SessionLocal
 
 db = SessionLocal()
 

@@ -2,8 +2,8 @@
 
 import click
 
-from .data_loader import SGGSDataLoader, load_sample_data
-from .models import SessionLocal, create_tables
+from paathguide.data_loader import SGGSDataLoader, load_sample_data
+from paathguide.db_helper.models import SessionLocal, create_tables
 
 
 @click.group()

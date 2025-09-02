@@ -1,33 +1,69 @@
-"""Test script for fuzzy search functionality."""
+#!/usr/bin/env python3
+"""
+Test script for the enhanced fuzzy search with text cleaning.
+"""
 
-import sys
 import os
+import sys
+from pathlib import Path
 
-# Add the project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the paathguide package to the path
+sys.path.insert(0, str(Path(__file__).parent / "paathguide"))
 
-from paathguide.data_loader import load_sample_data
+from paathguide.db_helper.models import Verse, create_database, get_session
 from paathguide.fuzzy_search import SGGSFuzzySearcher
-from paathguide.models import SessionLocal, create_tables
+from paathguide.text_cleaner import SGGSTextCleaner
 
+def create_sample_data():
+    """Create some sample verses for testing."""
+    create_database()
+    session = get_session()
+    
+    # Add sample verses including the correct one
+    sample_verses = [
+        {
+            "gurmukhi": "ਤੁਮਹੇ ਛਾਡਿ ਕੋਈ ਅਵਰ ਨ ਧਿਆਊਂ",
+            "english": "Except for You, I do not meditate on any other.",
+            "page": 404,
+            "line": 5
+        },
+        {
+            "gurmukhi": "ਰਾਮ ਨਾਮ ਬਿਨ ਤਿਲੁ ਨ ਤ੍ਰਪਤੇ",
+            "english": "Without the Lord's Name, they are not satisfied, even for an instant.",
+            "page": 284,
+            "line": 3
+        },
+        {
+            "gurmukhi": "ਸਰਬ ਧਰਮ ਮਹਿ ਸ੍ਰੇਸਟ ਧਰਮੁ",
+            "english": "Of all dharmas, the highest dharma",
+            "page": 1298,
+            "line": 7
+        },
+        {
+            "gurmukhi": "ਆਪੇ ਹੀ ਸਭ ਕਿਛੁ ਦੇਖਿਆ",
+            "english": "He Himself sees all things.",
+            "page": 932,
+            "line": 12
+        }
+    ]
+    
+    for verse_data in sample_verses:
+        verse = Verse(**verse_data)
+        session.add(verse)
+    
+    session.commit()
+    session.close()
+    
+    print("Sample data created successfully!")
 
 def test_fuzzy_search():
-    """Test the fuzzy search functionality."""
-    print("🔍 Testing SGGS Fuzzy Search...")
+    """Test the fuzzy search with the STT example."""
+    print("Testing fuzzy search with STT example...")
+    print("=" * 60)
     
-    # Create tables and load sample data
-    create_tables()
-    db = SessionLocal()
+    searcher = SGGSFuzzySearcher()
     
-    try:
-        # Load sample data
-        load_sample_data(db)
-        print("✅ Sample data loaded")
-        
-        # Initialize fuzzy searcher
-        fuzzy_searcher = SGGSFuzzySearcher(db)
-        
-        # Test query (your example with STT errors)
+    # Your STT example
         query_text = "ਗੁਰ ਪੱੱਾਦ ਜਾਪ ਆਦ ਸਾਚ ਜਗਾਦ ਸਾਚ ਹਿ ਸਾਚ ਨਾਨਕ ਹੋ ਸੀਬੀ ਸਾਚ ਸਚ਼ਿ ਸ਼ਿ ਸ਼ਿ ਸ਼ਿ ਸ਼ਿ"
         
         print(f"\n🎯 Query: {query_text}")

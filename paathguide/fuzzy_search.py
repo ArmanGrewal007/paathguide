@@ -5,8 +5,9 @@ from typing import Any
 from rapidfuzz import fuzz, process
 from sqlalchemy.orm import Session
 
-from . import models, schemas
-from .repository import VerseRepository
+from paathguide.db_helper import models
+from paathguide.repository import VerseRepository
+from paathguide.text_cleaner import WhisperTextCleaner
 
 
 class FuzzySearchResult:
@@ -24,6 +25,7 @@ class SGGSFuzzySearcher:
     def __init__(self, db: Session):
         self.db = db
         self.repo = VerseRepository(db)
+        self.text_cleaner = WhisperTextCleaner()
 
     def _get_all_verses_text(self) -> dict[str, models.Verse]:
         """Get all verses as a dictionary mapping text to verse objects."""
@@ -75,9 +77,7 @@ class SGGSFuzzySearcher:
 
         return results
 
-    def find_best_match(
-        self, query_text: str, score_cutoff: float = 60.0, ratio_type: str = "WRatio"
-    ) -> FuzzySearchResult | None:
+    def find_best_match(self, query_text: str, score_cutoff: float = 60.0, ratio_type: str = "WRatio") -> FuzzySearchResult | None:
         """
         Find the single best matching verse.
 
@@ -151,7 +151,7 @@ class SGGSFuzzySearcher:
         """
         processed_query = query_text
         if clean_text:
-            processed_query = self._preprocess_text(query_text)
+            processed_query = self.text_cleaner.clean_stt_output(query_text)
 
         return self.find_closest_matches(
             processed_query, limit=limit, score_cutoff=score_cutoff
@@ -189,3 +189,33 @@ class SGGSFuzzySearcher:
         """
         ratio_func = self._get_ratio_function(ratio_type)
         return ratio_func(text1, text2)
+
+    def compare_cleaning_approaches(
+        self, query_text: str, limit: int = 3, score_cutoff: float = 30.0
+    ) -> dict[str, dict[str, str | list[FuzzySearchResult]]]:
+        """
+        Compare fuzzy search results using different cleaning approaches.
+        
+        Args:
+            query_text: The text to search for
+            limit: Maximum number of results per approach
+            score_cutoff: Minimum similarity score
+            
+        Returns:
+            Dictionary with cleaning approach names as keys and results as values
+        """
+        approaches = {
+            "no_cleaning": query_text,
+            "cleaning": self.text_cleaner.clean_stt_output(query_text),
+        }
+
+        results = {}
+        for approach, cleaned_query in approaches.items():
+            results[approach] = {
+                "cleaned_query": cleaned_query,
+                "results": self.find_closest_matches(
+                    cleaned_query, limit=limit, score_cutoff=score_cutoff
+                )
+            }
+
+        return results

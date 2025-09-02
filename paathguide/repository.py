@@ -3,7 +3,7 @@
 from sqlalchemy import and_, distinct, func
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from paathguide.db_helper import models, schemas
 
 
 class VerseRepository:

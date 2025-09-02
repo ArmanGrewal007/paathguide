@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
 
-from . import schemas
-from .data_loader import SGGSDataLoader, load_sample_data
-from .fuzzy_search import SGGSFuzzySearcher
-from .models import create_tables, get_db
-from .repository import VerseRepository
+from paathguide.data_loader import SGGSDataLoader, load_sample_data
+from paathguide.db_helper import schemas
+from paathguide.db_helper.models import create_tables, get_db
+from paathguide.fuzzy_search import SGGSFuzzySearcher
+from paathguide.repository import VerseRepository
 
 # Create FastAPI app
 app = FastAPI(
@@ -177,21 +177,13 @@ def fuzzy_search_verses(
 ):
     """Find verses using fuzzy string matching."""
     fuzzy_searcher = SGGSFuzzySearcher(db)
-    
-    if search_request.clean_text:
-        results = fuzzy_searcher.search_with_preprocessing(
-            query_text=search_request.query_text,
-            limit=search_request.limit,
-            score_cutoff=search_request.score_cutoff
-        )
-    else:
-        results = fuzzy_searcher.find_closest_matches(
-            query_text=search_request.query_text,
-            limit=search_request.limit,
-            score_cutoff=search_request.score_cutoff,
-            ratio_type=search_request.ratio_type
-        )
-    
+
+    results = fuzzy_searcher.search_with_preprocessing(
+        query_text=search_request.query_text,
+        limit=search_request.limit,
+        score_cutoff=search_request.score_cutoff
+    )
+
     # Convert to response format
     fuzzy_results = [
         schemas.FuzzySearchResult(
@@ -201,7 +193,7 @@ def fuzzy_search_verses(
         )
         for result in results
     ]
-    
+
     return schemas.FuzzySearchResponse(
         query_text=search_request.query_text,
         results=fuzzy_results,
@@ -239,18 +231,18 @@ def compare_fuzzy_methods(
 ):
     """Compare the query using multiple fuzzy matching methods."""
     fuzzy_searcher = SGGSFuzzySearcher(db)
-    
+
     methods_results = fuzzy_searcher.compare_with_multiple_methods(
         query_text=query_text,
         limit=limit,
         score_cutoff=score_cutoff
     )
-    
+
     # Convert to response format
     response_methods = {}
     best_result = None
     best_score = 0.0
-    
+
     for method, results in methods_results.items():
         method_results = [
             schemas.FuzzySearchResult(
@@ -261,12 +253,12 @@ def compare_fuzzy_methods(
             for result in results
         ]
         response_methods[method] = method_results
-        
+
         # Track the best result across all methods
         if method_results and method_results[0].score > best_score:
             best_score = method_results[0].score
             best_result = method_results[0]
-    
+
     return schemas.FuzzyComparisonResponse(
         query_text=query_text,
         methods=response_methods,
@@ -283,13 +275,13 @@ def find_best_match(
 ):
     """Find the single best matching verse."""
     fuzzy_searcher = SGGSFuzzySearcher(db)
-    
+
     result = fuzzy_searcher.find_best_match(
         query_text=query_text,
         score_cutoff=score_cutoff,
         ratio_type=ratio_type
     )
-    
+
     if result:
         return schemas.FuzzySearchResult(
             verse=result.verse,
