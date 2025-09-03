@@ -2,7 +2,7 @@
 
 from sqlalchemy import text
 
-from paathguide.db_helper.models import SessionLocal
+from paathguide.db.models import SessionLocal
 
 db = SessionLocal()
 

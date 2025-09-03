@@ -1,6 +1,6 @@
 import whisper
 
-from paathguide.transcribe_helper.record_audio import AudioRecorder
+from paathguide.transcribe.record_audio import AudioRecorder
 
 
 def transcribe_from_microphone(audio_recorder, duration=10, model_size="medium", language="pa"):

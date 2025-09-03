@@ -7,9 +7,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from paathguide.data_loader import load_sample_data
-from paathguide.db_helper import schemas
-from paathguide.db_helper.models import SessionLocal, create_tables
-from paathguide.repository import VerseRepository
+from paathguide.db import schemas
+from paathguide.db.models import SessionLocal, create_tables
+from paathguide.db.repository import VerseRepository
 
 
 def test_basic_functionality():

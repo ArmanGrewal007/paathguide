@@ -1,20 +1,29 @@
 @startuml architecture
-actor User
+!define RECTANGLE class
 
-rectangle "Paath Guide App (Mobile)" {
-  User --> "🎙️ Mic Input"
-  "Mic Input" --> "Audio Preprocessor\n(Noise Reduction, VAD)"
-  "Audio Preprocessor" --> "Feature Extraction\n(Whisper / Wav2Vec2)"
-  "Feature Extraction" --> "API Call"
-}
+actor User as U
+database "sggs.db" as DB
+rectangle "🎙️Audio Recording" as AudioRec
+rectangle "WhisperTurbo" as WhisperTurbo
+rectangle "api.py" as API
+rectangle "text_cleaner.py" as TextCleaner
+rectangle "fuzzy_search.py" as FuzzyEngine
 
-rectangle "Backend (FastAPI)" {
-  "API Call" --> "Vector DB (FAISS / Pinecone)"
-  "Vector DB (FAISS / Pinecone)" --> "Match Gurbani Line"
-  "Match Gurbani Line" --> "SGGS DB\n(Text + Translation)"
-  "SGGS DB\n(Text + Translation)" --> "API Response"
-}
+' User interaction flow
+U --> AudioRec : Speaks into microphone
+AudioRec --> WhisperTurbo : Audio data
+WhisperTurbo --> API : POST request to /fuzzy-search
+API --> TextCleaner: raw text
+TextCleaner --> FuzzyEngine : cleaned text
+FuzzyEngine --> DB : search
+DB --> U : Results
 
-"API Response" --> "Paath Guide App (Mobile)"
-"Paath Guide App (Mobile)" --> User : "📖 Display Ang + Line\nwith Translation"
-@enduml
+note right of DB
+  One time load 
+  using data_loader.py
+end note
+
+' note right of TextCleaner
+'   Normalizes text for
+'   better matching
+' end note

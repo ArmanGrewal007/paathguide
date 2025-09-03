@@ -11,10 +11,20 @@
 
 ## 2. Prototype Matching Engine
 
-- Matching engine is needed
-  - Maybe after audiio to text transcribe, I need to do some cleaning ... removal of stopwords, searching only genuine words that have been transformed.
-  - Later I also need to factor in noise.
-  - We need the accuracy to be as high as possible, will focus on speed later.
+- Added cleaning, removal of diacritics.
+- Matching engine approaches &rarr;
+
+| |
+
+| Approach                                                                                                                          | Cons                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| RDBMS, store verses line by line and do a `rapidfuzz` search                                                                    | poor performance on query_text which spans multiple rows |
+| **Edit distance based matching** &rarr;<br />- Levenshtein distance &rarr;<br />- Jaro-Winkler distance &Rarr;             |                                                          |
+| **Token/word base matching** &rarr;<br />- Jaccard similarity &rarr;<br />- Cosime similarity with TF/IDF &rarr;           |                                                          |
+| **N-gram based matching**&Rarr;<br />- Character ngram &rarr;(This seems to be the most promising)<br />- Word ngram &rarr; |                                                          |
+| **ML matching** &rarr;<br />- Sentence embeddings (BERT, SentenceTransformer) &rarr;                                       |                                                          |
+| **Elasticasearch's fuzzy capabilties** &Rarr;                                                                               |                                                          |
+| **Phonetic matching** &rarr;<br />- Soundex &rarr;<br />- Metaphone &rarr;                                                 |                                                          |
 
 ## 3. Backend Service
 

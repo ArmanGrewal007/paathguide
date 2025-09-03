@@ -3,7 +3,7 @@
 from sqlalchemy import and_, distinct, func
 from sqlalchemy.orm import Session
 
-from paathguide.db_helper import models, schemas
+from paathguide.db import models, schemas
 
 
 class VerseRepository:
@@ -77,7 +77,7 @@ class VerseRepository:
         if not verse or verse.line_number is None:
             return []
 
-        min_line = max(1, verse.line_number - context)
+        min_line = max(1, verse.line_number - context) # type: ignore
         max_line = verse.line_number + context
 
         return (

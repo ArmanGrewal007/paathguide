@@ -5,8 +5,8 @@ from typing import Any
 from rapidfuzz import fuzz, process
 from sqlalchemy.orm import Session
 
-from paathguide.db_helper import models
-from paathguide.repository import VerseRepository
+from paathguide.db import models
+from paathguide.db.repository import VerseRepository
 from paathguide.text_cleaner import WhisperTextCleaner
 
 

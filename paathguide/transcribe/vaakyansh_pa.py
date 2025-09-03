@@ -3,7 +3,7 @@ import warnings
 
 import nemo.collections.asr as nemo_asr
 
-from paathguide.transcribe_helper.record_audio import AudioRecorder
+from paathguide.transcribe.record_audio import AudioRecorder
 
 # Force PyTorch to use CPU to avoid MPS warnings (optional)
 # os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"

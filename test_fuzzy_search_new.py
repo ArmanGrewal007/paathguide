@@ -9,7 +9,7 @@ import sys
 # Add the paathguide package to the path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from paathguide.db_helper.models import Verse, create_database, get_session
+from paathguide.db.models import Verse, create_database, get_session
 from paathguide.fuzzy_search import SGGSFuzzySearcher
 from paathguide.text_cleaner import WhisperTextCleaner
 

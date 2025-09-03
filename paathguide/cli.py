@@ -3,7 +3,7 @@
 import click
 
 from paathguide.data_loader import SGGSDataLoader, load_sample_data
-from paathguide.db_helper.models import SessionLocal, create_tables
+from paathguide.db.models import SessionLocal, create_tables
 
 
 @click.group()
@@ -79,7 +79,7 @@ def init_db():
 @cli.command()
 def stats():
     """Show database statistics."""
-    from .repository import VerseRepository
+    from .db.repository import VerseRepository
 
     db = SessionLocal()
     try:

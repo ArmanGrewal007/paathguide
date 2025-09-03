@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 import uvicorn
 
 from paathguide.data_loader import SGGSDataLoader, load_sample_data
-from paathguide.db_helper import schemas
-from paathguide.db_helper.models import create_tables, get_db
+from paathguide.db import schemas
+from paathguide.db.models import create_tables, get_db
 from paathguide.fuzzy_search import SGGSFuzzySearcher
-from paathguide.repository import VerseRepository
+from paathguide.db.repository import VerseRepository
 
 # Create FastAPI app
 app = FastAPI(

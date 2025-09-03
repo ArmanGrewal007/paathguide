@@ -3,8 +3,8 @@
 from docx import Document
 from sqlalchemy.orm import Session
 
-from paathguide.db_helper import models, schemas
-from paathguide.repository import VerseRepository
+from paathguide.db import models, schemas
+from paathguide.db.repository import VerseRepository
 
 
 class SGGSDataLoader:
