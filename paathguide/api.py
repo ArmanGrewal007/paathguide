@@ -41,14 +41,14 @@ def read_root():
 
 
 # SGGS Text CRUD endpoints
-@app.post("/verses/", response_model=schemas.Verse, summary="Create a new verse")
-def create_verse(verse: schemas.VerseCreate, db: Session = Depends(get_db)):
+@app.post("/verses/", response_model=schemas.SGGSText, summary="Create a new verse")
+def create_verse(verse: schemas.SGGSTextCreate, db: Session = Depends(get_db)):
     """Create a new verse."""
     repo = SGGSTextRepository(db)
     return repo.create_sggs_text(verse)
 
 
-@app.get("/verses/{verse_id}", response_model=schemas.Verse, summary="Get verse by ID")
+@app.get("/verses/{verse_id}", response_model=schemas.SGGSText, summary="Get verse by ID")
 def get_verse(verse_id: int, db: Session = Depends(get_db)):
     """Get a specific verse by ID."""
     repo = SGGSTextRepository(db)
@@ -58,15 +58,15 @@ def get_verse(verse_id: int, db: Session = Depends(get_db)):
     return verse
 
 
-@app.get("/verses/", response_model=list[schemas.Verse], summary="List verses")
+@app.get("/verses/", response_model=list[schemas.SGGSText], summary="List verses")
 def list_verses(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     """List verses with pagination."""
     repo = SGGSTextRepository(db)
     return repo.get_sggs_texts(skip=skip, limit=limit)
 
 
-@app.put("/verses/{verse_id}", response_model=schemas.Verse, summary="Update verse")
-def update_verse(verse_id: int, verse_update: schemas.VerseUpdate, db: Session = Depends(get_db)):
+@app.put("/verses/{verse_id}", response_model=schemas.SGGSText, summary="Update verse")
+def update_verse(verse_id: int, verse_update: schemas.SGGSTextUpdate, db: Session = Depends(get_db)):
     """Update a verse."""
     repo = SGGSTextRepository(db)
     updated_verse = repo.update_sggs_text(verse_id, verse_update)
@@ -91,7 +91,7 @@ def search_verses(search_query: schemas.VerseSearchQuery, db: Session = Depends(
     repo = SGGSTextRepository(db)
     verses, total = repo.search_sggs_texts(search_query)
     # Convert ORM objects to Pydantic schema objects
-    verses_schema = [schemas.Verse.from_orm(v) for v in verses]
+    verses_schema = [schemas.SGGSText.from_orm(v) for v in verses]
     
     return schemas.SearchResponse(
         verses=verses_schema,
@@ -133,7 +133,7 @@ def get_page(page_number: int, db: Session = Depends(get_db)):
     return {"page_number": page_number, "verses": verses, "total_lines": len(verses)}
 
 
-@app.get("/verses/{verse_id}/context", response_model=list[schemas.Verse], summary="Get verse context")
+@app.get("/verses/{verse_id}/context", response_model=list[schemas.SGGSText], summary="Get verse context")
 def get_verse_context(
     verse_id: int,
     context: int = Query(3, ge=1, le=10, description="Number of lines before/after"),
@@ -147,7 +147,7 @@ def get_verse_context(
     return context_verses
 
 
-@app.get("/verses/page/{page}/line/{line}", response_model=schemas.Verse, summary="Get verse by page and line")
+@app.get("/verses/page/{page}/line/{line}", response_model=schemas.SGGSText, summary="Get verse by page and line")
 def get_verse_by_location(page: int, line: int, db: Session = Depends(get_db)):
     """Get verse by page and line number."""
     repo = SGGSTextRepository(db)
@@ -157,7 +157,7 @@ def get_verse_by_location(page: int, line: int, db: Session = Depends(get_db)):
     return verse
 
 
-@app.get("/random", response_model=schemas.Verse, summary="Get random verse")
+@app.get("/random", response_model=schemas.SGGSText, summary="Get random verse")
 def get_random_verse(db: Session = Depends(get_db)):
     """Get a random verse."""
     repo = SGGSTextRepository(db)

@@ -158,45 +158,6 @@ class SGGSTextRepository:
             sggs_texts = db_query.offset(query.offset).limit(query.limit).all()
 
             return sggs_texts, total
-        """Search SGGS texts based on query parameters."""
-        # If we have a text query, use FTS5
-        if query.query:
-            # For FTS5, we'll do a basic search and then apply filters
-            base_results, base_total = self.search_with_fts(query.query, 0, 1000)  # Get more results to filter
-            
-            # Apply additional filters if needed
-            filtered_results = base_results
-            if query.page_number:
-                filtered_results = [r for r in filtered_results if r.page_number == query.page_number]
-            if query.raag:
-                filtered_results = [r for r in filtered_results if r.raag == query.raag]
-            if query.author:
-                filtered_results = [r for r in filtered_results if r.author == query.author]
-            
-            # Apply pagination
-            total = len(filtered_results)
-            paginated_results = filtered_results[query.offset:query.offset + query.limit]
-            
-            return paginated_results, total
-        else:
-            # If no text query, use traditional database queries
-            db_query = self.db.query(models.SGGSText)
-
-            # Filters
-            if query.page_number:
-                db_query = db_query.filter(models.SGGSText.page_number == query.page_number)
-            if query.raag:
-                db_query = db_query.filter(models.SGGSText.raag == query.raag)
-            if query.author:
-                db_query = db_query.filter(models.SGGSText.author == query.author)
-
-            # Get total count before pagination
-            total = db_query.count()
-
-            # Apply pagination
-            sggs_texts = db_query.offset(query.offset).limit(query.limit).all()
-
-            return sggs_texts, total
 
     def get_page_content(self, page_number: int) -> list[models.SGGSText]:
         """Get all SGGS texts from a specific page."""
@@ -260,20 +221,13 @@ class SGGSTextRepository:
         """Get database statistics."""
         total_verses = self.db.query(models.SGGSText).count()
         total_pages = self.db.query(distinct(models.SGGSText.page_number)).count()
-        verses_with_translations = (
-            self.db.query(models.SGGSText).filter(models.SGGSText.translation.isnot(None)).count()
-        )
-        verses_with_transliterations = (
-            self.db.query(models.SGGSText).filter(models.SGGSText.transliteration.isnot(None)).count()
-        )
-        unique_raags = (
-            self.db.query(distinct(models.SGGSText.raag)).filter(models.SGGSText.raag.isnot(None)).count()
-        )
-        unique_authors = (
-            self.db.query(distinct(models.SGGSText.author))
-            .filter(models.SGGSText.author.isnot(None))
-            .count()
-        )
+        count_non_null = lambda field: self.db.query(models.SGGSText).filter(field.isnot(None)).count()
+        count_unique_non_null = lambda field: self.db.query(distinct(field)).filter(field.isnot(None)).count()
+
+        verses_with_translations = count_non_null(models.SGGSText.translation)
+        verses_with_transliterations = count_non_null(models.SGGSText.transliteration)
+        unique_raags = count_unique_non_null(models.SGGSText.raag)
+        unique_authors = count_unique_non_null(models.SGGSText.author)
 
         return schemas.StatsResponse(
             total_verses=total_verses,
@@ -291,47 +245,3 @@ class SGGSTextRepository:
         self.db.commit()
         return db_sggs_texts
 
-    # Backward compatibility methods
-    def create_verse(self, verse: schemas.VerseCreate) -> models.SGGSText:
-        """Create a new verse (backward compatibility)."""
-        return self.create_sggs_text(verse)
-
-    def get_verse(self, verse_id: int) -> models.SGGSText | None:
-        """Get a verse by ID (backward compatibility)."""
-        return self.get_sggs_text(verse_id)
-
-    def get_verse_by_page_line(self, page: int, line: int) -> models.SGGSText | None:
-        """Get a verse by page and line number (backward compatibility)."""
-        return self.get_sggs_text_by_page_line(page, line)
-
-    def get_verses(self, skip: int = 0, limit: int = 20) -> list[models.SGGSText]:
-        """Get verses with pagination (backward compatibility)."""
-        return self.get_sggs_texts(skip, limit)
-
-    def search_verses(self, query: schemas.VerseSearchQuery) -> tuple[list[models.SGGSText], int]:
-        """Search verses based on query parameters (backward compatibility)."""
-        return self.search_sggs_texts(query)
-
-    def get_surrounding_verses(self, verse_id: int, context: int = 3) -> list[models.SGGSText]:
-        """Get verses around a specific verse for context (backward compatibility)."""
-        return self.get_surrounding_texts(verse_id, context)
-
-    def get_random_verse(self) -> models.SGGSText | None:
-        """Get a random verse (backward compatibility)."""
-        return self.get_random_sggs_text()
-
-    def update_verse(self, verse_id: int, verse_update: schemas.VerseUpdate) -> models.SGGSText | None:
-        """Update a verse (backward compatibility)."""
-        return self.update_sggs_text(verse_id, verse_update)
-
-    def delete_verse(self, verse_id: int) -> bool:
-        """Delete a verse (backward compatibility)."""
-        return self.delete_sggs_text(verse_id)
-
-    def bulk_create_verses(self, verses: list[schemas.VerseCreate]) -> list[models.SGGSText]:
-        """Create multiple verses efficiently (backward compatibility)."""
-        return self.bulk_create_sggs_texts(verses)
-
-
-# Backward compatibility alias
-VerseRepository = SGGSTextRepository

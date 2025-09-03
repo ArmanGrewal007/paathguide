@@ -43,13 +43,6 @@ class SGGSText(SGGSTextBase):
         from_attributes = True
 
 
-# Backward compatibility aliases
-VerseBase = SGGSTextBase
-VerseCreate = SGGSTextCreate
-VerseUpdate = SGGSTextUpdate
-Verse = SGGSText
-
-
 class VerseSearchQuery(BaseModel):
     """Schema for search queries."""
 
@@ -87,37 +80,3 @@ class StatsResponse(BaseModel):
     verses_with_transliterations: int
     unique_raags: int
     unique_authors: int
-
-
-class FuzzySearchRequest(BaseModel):
-    """Schema for fuzzy search requests."""
-    query_text: str = Field(..., description="Text to search for")
-    limit: int = Field(default=10, ge=1, le=50, description="Maximum number of results")
-    score_cutoff: float = Field(default=60.0, ge=0.0, le=100.0, description="Minimum similarity score")
-    ratio_type: str = Field(default="WRatio", description="Fuzzy matching algorithm")
-    clean_text: bool = Field(default=True, description="Apply text preprocessing")
-
-
-class FuzzySearchResult(BaseModel):
-    """Schema for fuzzy search result."""
-    verse: SGGSText  # Updated to use SGGSText instead of Verse
-    score: float = Field(..., description="Similarity score (0-100)")
-    ratio_type: str = Field(..., description="Fuzzy matching algorithm used")
-
-    class Config:
-        from_attributes = True
-
-
-class FuzzySearchResponse(BaseModel):
-    """Schema for fuzzy search response."""
-    query_text: str
-    results: list[FuzzySearchResult]
-    total_found: int
-    search_params: dict
-
-
-class FuzzyComparisonResponse(BaseModel):
-    """Schema for fuzzy comparison using multiple methods."""
-    query_text: str
-    methods: dict[str, list[FuzzySearchResult]]
-    best_overall: FuzzySearchResult | None
