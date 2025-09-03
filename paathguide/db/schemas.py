@@ -5,8 +5,8 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class VerseBase(BaseModel):
-    """Base schema for verse data."""
+class SGGSTextBase(BaseModel):
+    """Base schema for SGGS text data."""
 
     gurmukhi_text: str = Field(..., description="The Gurmukhi text of the verse")
     page_number: int | None = Field(None, description="Page number in SGGS")
@@ -17,14 +17,14 @@ class VerseBase(BaseModel):
     author: str | None = Field(default=None, description="Author (Guru/Bhagat)")
 
 
-class VerseCreate(VerseBase):
-    """Schema for creating a new verse."""
+class SGGSTextCreate(SGGSTextBase):
+    """Schema for creating new SGGS text."""
 
     pass
 
 
-class VerseUpdate(BaseModel):
-    """Schema for updating a verse."""
+class SGGSTextUpdate(BaseModel):
+    """Schema for updating SGGS text."""
 
     gurmukhi_text: str | None = None
     transliteration: str | None = None
@@ -33,8 +33,8 @@ class VerseUpdate(BaseModel):
     author: str | None = None
 
 
-class Verse(VerseBase):
-    """Schema for verse response."""
+class SGGSText(SGGSTextBase):
+    """Schema for SGGS text response."""
 
     id: int
     created_at: datetime
@@ -43,13 +43,20 @@ class Verse(VerseBase):
         from_attributes = True
 
 
+# Backward compatibility aliases
+VerseBase = SGGSTextBase
+VerseCreate = SGGSTextCreate
+VerseUpdate = SGGSTextUpdate
+Verse = SGGSText
+
+
 class VerseSearchQuery(BaseModel):
     """Schema for search queries."""
 
     query: str = Field(..., description="Search text")
-    page_number: int | None = Field(None, description="Filter by page number")
-    raag: str | None = Field(None, description="Filter by raag")
-    author: str | None = Field(None, description="Filter by author")
+    page_number: int | None = Field(default=None, description="Filter by page number")
+    raag: str | None = Field(default=None, description="Filter by raag")
+    author: str | None = Field(default=None, description="Filter by author")
     limit: int = Field(default=20, le=100, description="Maximum results to return")
     offset: int = Field(default=0, ge=0, description="Number of results to skip")
 
@@ -57,7 +64,7 @@ class VerseSearchQuery(BaseModel):
 class SearchResponse(BaseModel):
     """Schema for search response."""
 
-    verses: list[Verse]
+    verses: list[SGGSText]  # Updated to use SGGSText instead of Verse
     total: int
     limit: int
     offset: int
@@ -67,7 +74,7 @@ class PageResponse(BaseModel):
     """Schema for page content response."""
 
     page_number: int
-    verses: list[Verse]
+    verses: list[SGGSText]  # Updated to use SGGSText instead of Verse
     total_lines: int
 
 
@@ -93,7 +100,7 @@ class FuzzySearchRequest(BaseModel):
 
 class FuzzySearchResult(BaseModel):
     """Schema for fuzzy search result."""
-    verse: Verse
+    verse: SGGSText  # Updated to use SGGSText instead of Verse
     score: float = Field(..., description="Similarity score (0-100)")
     ratio_type: str = Field(..., description="Fuzzy matching algorithm used")
 
