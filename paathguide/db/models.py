@@ -78,7 +78,7 @@ def create_fts_table():
         except Exception as e:
             print(f"Note: Could not drop old tables: {e}")
         
-        # Create FTS5 virtual table
+        # Create FTS5 virtual table with unicode61 tokenizer for better Gurmukhi support
         fts_sql = text("""
         CREATE VIRTUAL TABLE IF NOT EXISTS sggs_fts USING fts5(
             gurmukhi_text,
@@ -89,7 +89,8 @@ def create_fts_table():
             raag UNINDEXED,
             author UNINDEXED,
             content='sggs_text',
-            content_rowid='id'
+            content_rowid='id',
+            tokenize='unicode61'
         )
         """)
         connection.execute(fts_sql)

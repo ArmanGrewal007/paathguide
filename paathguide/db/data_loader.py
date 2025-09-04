@@ -147,6 +147,23 @@ class SGGSDataLoader:
         self.db.commit()
         print("Database cleared")
 
+    def rebuild_fts_index(self):
+        """Rebuild the FTS5 index to fix search issues."""
+        from sqlalchemy import text
+        
+        print("Rebuilding FTS5 index...")
+        try:
+            # Execute rebuild command
+            self.db.execute(text("INSERT INTO sggs_fts(sggs_fts) VALUES('rebuild')"))
+            self.db.commit()
+            print("FTS5 index rebuilt successfully")
+        except Exception as e:
+            print(f"Error rebuilding FTS5 index: {e}")
+            # If rebuild fails, try recreating the table
+            print("Attempting to recreate FTS5 table...")
+            models.create_fts_table()
+            print("FTS5 table recreated")
+
     def reload_data(self, file_path: str, skip_first: int = 2) -> int:
         """Clear database and reload data."""
         self.clear_database()

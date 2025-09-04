@@ -5,10 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
 
-from paathguide.data_loader import SGGSDataLoader
+from paathguide.db.data_loader import SGGSDataLoader
 from paathguide.db import schemas
 from paathguide.db.models import create_tables, get_db
 from paathguide.db.repository import SGGSTextRepository
+from paathguide.search.fuzzy_search import FuzzySearch
 
 # Create FastAPI app
 app = FastAPI(
@@ -92,13 +93,10 @@ def search_verses(search_query: schemas.VerseSearchQuery, db: Session = Depends(
     verses, total = repo.search_sggs_texts(search_query)
     # Convert ORM objects to Pydantic schema objects
     verses_schema = [schemas.SGGSText.from_orm(v) for v in verses]
-    
-    return schemas.SearchResponse(
-        verses=verses_schema,
-        total=total,
-        limit=search_query.limit,
-        offset=search_query.offset,
-    )
+
+    return schemas.SearchResponse(verses=verses_schema, total=total, 
+                                  limit=search_query.limit, offset=search_query.offset)
+
 
 
 @app.get("/search/", response_model=schemas.SearchResponse, summary="Search verses (GET method)")
@@ -112,15 +110,30 @@ def search_verses_get(
     db: Session = Depends(get_db),
 ):
     """Search verses using GET method with query parameters."""
-    search_query = schemas.VerseSearchQuery(
-        query=query,
-        page_number=page_number,
-        raag=raag,
-        author=author,
-        limit=limit,
-        offset=offset,
-    )
+    search_query = schemas.VerseSearchQuery(query=query, page_number=page_number, raag=raag,
+                                            author=author, limit=limit, offset=offset)
     return search_verses(search_query, db)
+
+
+
+@app.post("/fuzzy-search/", response_model=schemas.SearchResponse, summary="Fuzzy search using whisper output")
+def fuzzy_search(
+    query: str = Query(..., description="Raw whisper transcription or search query"),
+    limit: int = Query(10, le=50, description="Maximum results to return"),
+    use_fuzzy: bool = Query(True, description="Enable fuzzy matching"),
+    min_similarity: float = Query(0.3, ge=0.0, le=1.0, description="Minimum similarity threshold"),
+    db: Session = Depends(get_db),
+):
+    """Search SGGS using fuzzy matching for whisper output or imperfect queries."""
+    searcher = FuzzySearch(db)
+    try:
+        verses, total = searcher.search(query, limit, use_fuzzy, min_similarity)
+        # Convert ORM objects to Pydantic schema objects
+        verses_schema = [schemas.SGGSText.from_orm(v) for v in verses]
+        return schemas.SearchResponse(verses=verses_schema, total=total, limit=limit, offset=0)
+    finally:
+        # Don't close db here since it's managed by FastAPI
+        pass
 
 
 # Page and navigation endpoints

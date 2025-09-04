@@ -2,7 +2,7 @@
 
 import click
 
-from paathguide.data_loader import SGGSDataLoader
+from paathguide.db.data_loader import SGGSDataLoader
 from paathguide.db.models import SessionLocal, create_tables
 
 
@@ -51,6 +51,21 @@ def clear_data():
         finally:
             db.close()
 
+@cli.command()
+def rebuild_fts():
+    """Rebuild the FTS5 search index."""
+    from paathguide.db.data_loader import SGGSDataLoader
+    
+    db = SessionLocal()
+    try:
+        loader = SGGSDataLoader(db)
+        loader.rebuild_fts_index()
+        click.echo("✅ FTS5 index rebuilt successfully")
+    except Exception as e:
+        click.echo(f"❌ Error: {e}")
+    finally:
+        db.close()
+
 
 @cli.command()
 def init_db():
@@ -88,19 +103,13 @@ def stats():
 @click.option("--limit", "-l", default=5, help="Number of results to show")
 def search(query: str, limit: int):
     """Test FTS5 search functionality."""
-    from .db.repository import SGGSTextRepository
-    from .db import schemas
+    from paathguide.db.repository import SGGSTextRepository
+    from paathguide.db.schemas import VerseSearchQuery
 
     db = SessionLocal()
     try:
         repo = SGGSTextRepository(db)
-        
-        search_query = schemas.VerseSearchQuery(
-            query=query,
-            limit=limit,
-            offset=0
-        )
-        
+        search_query = VerseSearchQuery(query=query, limit=limit, offset=0)
         verses, total = repo.search_sggs_texts(search_query)
         
         click.echo(f"\n🔍 Search results for '{query}' (showing {len(verses)} of {total} total):")
@@ -126,10 +135,41 @@ def search(query: str, limit: int):
 
 
 @cli.command()
+@click.option("--query", "-q", required=True, help="Raw whisper transcription")
+@click.option("--limit", "-l", default=5, help="Number of results to show")
+@click.option("--min-similarity", "-s", default=0.3, help="Minimum similarity threshold")
+def fuzzy_search(query: str, limit: int, min_similarity: float):
+    """Search using whisper output with automatic cleaning and fuzzy matching."""
+    from paathguide.search.fuzzy_search import FuzzySearch
+
+    try:
+        with FuzzySearch() as searcher:
+            # Show cleaned query
+            cleaned = searcher.get_cleaned_query(query)
+            click.echo(f"Original: '{query}'")
+            click.echo(f"Cleaned:  '{cleaned}'")
+            
+            # Perform search with fuzzy enabled
+            results, total = searcher.search(query, limit, use_fuzzy=True, min_similarity=min_similarity)
+            
+            click.echo(f"\n🔍 Found {total} results (showing {len(results)}):")
+            click.echo("=" * 60)
+            
+            for i, result in enumerate(results, 1):
+                click.echo(f"\n{i}. Page {result.page_number}")
+                click.echo(f"   Text: {result.gurmukhi_text[:100]}...")
+                if result.raag is not None:
+                    click.echo(f"   Raag: {result.raag}")
+
+    except Exception as e:
+        click.echo(f"❌ Error: {e}")
+
+
+@cli.command()
 def add_test_data():
     """Add some test data to verify FTS5 functionality."""
-    from .db.repository import SGGSTextRepository
-    from .db import schemas
+    from paathguide.db.repository import SGGSTextRepository
+    from paathguide.db.schemas import VerseSearchQuery, SGGSTextCreate
 
     db = SessionLocal()
     try:
@@ -137,21 +177,21 @@ def add_test_data():
         
         # Add some test verses
         test_verses = [
-            schemas.SGGSTextCreate(
+            SGGSTextCreate(
                 gurmukhi_text="ਆਦਿ ਸਚੁ ਜੁਗਾਦਿ ਸਚੁ ॥",
                 page_number=1,
                 line_number=1,
                 raag="ਜਪੁਜੀ ਸਾਹਿਬ",
                 author="ਗੁਰੂ ਨਾਨਕ ਦੇਵ ਜੀ"
             ),
-            schemas.SGGSTextCreate(
+            SGGSTextCreate(
                 gurmukhi_text="ਹੈ ਭੀ ਸਚੁ ਨਾਨਕ ਹੋਸੀ ਭੀ ਸਚੁ ॥੧॥",
                 page_number=1,
                 line_number=2,
                 raag="ਜਪੁਜੀ ਸਾਹਿਬ",
                 author="ਗੁਰੂ ਨਾਨਕ ਦੇਵ ਜੀ"
             ),
-            schemas.SGGSTextCreate(
+            SGGSTextCreate(
                 gurmukhi_text="ਸੋਚੈ ਸੋਚਿ ਨ ਹੋਵਈ ਜੇ ਸੋਚੀ ਲਖ ਵਾਰ ॥",
                 page_number=1,
                 line_number=3,
@@ -167,7 +207,7 @@ def add_test_data():
         
         # Test search
         click.echo("\n🧪 Testing FTS5 search...")
-        search_query = schemas.VerseSearchQuery(query="ਸਚੁ", limit=5, offset=0)
+        search_query = VerseSearchQuery(query="ਸਚੁ", limit=5, offset=0)
         results, total = repo.search_sggs_texts(search_query)
         
         click.echo(f"Search for 'ਸਚੁ' returned {total} results")
